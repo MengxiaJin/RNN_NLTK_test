@@ -65,7 +65,60 @@ def generate_poem():
             word = generate_word(prob)
         # 打印生成的诗歌
         print (poem)
-
+def generate_acrostic(head):
+    """
+    生成藏头诗
+    :param head:每行的第一个字组成的字符串
+    :return:
+    """
+    if len(head)%2!=0:
+        with tf.Session() as sess:
+            # 加载最新的模型
+            ckpt = tf.train.get_checkpoint_state('ckpt')
+            saver.restore(sess, ckpt.model_checkpoint_path)
+            # 预测第一个词
+            rnn_state = sess.run(model.cell.zero_state(1, tf.float32))
+            x = np.array([[word2id_dict['s']]], np.int32)
+            prob, rnn_state = sess.run([model.prob, model.last_state],
+                                       {model.data: x, model.init_state: rnn_state, model.emb_keep: 1.0,
+                                        model.rnn_keep: 1.0})
+            word = generate_word(prob)
+        head=head+word
+    with tf.Session() as sess:
+        # 加载最新的模型
+        ckpt = tf.train.get_checkpoint_state('ckpt')
+        saver.restore(sess, ckpt.model_checkpoint_path)
+        # 进行预测
+        rnn_state = sess.run(model.cell.zero_state(1, tf.float32))
+        poem = ''
+        cnt = 1
+        # 一句句生成诗歌
+        for x in head:
+            word = x
+            while True:
+                if word not in ['，','。','e','_','《','》','(',')','（','）','、','…']:
+                    poem += word
+                x = np.array([[word2id_dict[word]]])
+                prob, rnn_state = sess.run([model.prob, model.last_state],
+                                           {model.data: x, model.init_state: rnn_state, model.emb_keep: 1.0,
+                                            model.rnn_keep: 1.0})
+                word = generate_word(prob)
+                #print("word:",word)
+                #print("poem:",poem)
+                #print("len-poem:",len(poem),cnt)
+                if (len(poem)-(cnt-1)) % 5==0 and (len(poem)-(cnt-1))!=0:
+                    print ('ok.')
+                    break
+            # 根据单双句添加标点符号
+            if cnt & 1:
+                poem += '，'
+            else:
+                poem += '。'
+            cnt += 1
+        # 打印生成的诗歌
+        print (poem)
+        return poem
 
 if __name__ == '__main__':
     generate_poem()
+    generate_acrostic(u'凤箫声动')

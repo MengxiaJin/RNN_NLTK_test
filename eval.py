@@ -56,8 +56,9 @@ def generate_poem():
         word = generate_word(prob)
         poem = ''
         # 循环操作，直到预测出结束符号‘e’
-        while word != 'e':
-            poem += word
+        while word!='e':
+            if word not in ['_','《','》','(',')','（','）','、','…']:
+                poem += word
             x = np.array([[word2id_dict[word]]])
             prob, rnn_state = sess.run([model.prob, model.last_state],
                                        {model.data: x, model.init_state: rnn_state, model.emb_keep: 1.0,
